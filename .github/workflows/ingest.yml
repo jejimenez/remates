@@ -1,0 +1,31 @@
+name: Ingest weekly remates
+
+on:
+  push:
+    paths:
+      - 'data/*.xlsx'
+  workflow_dispatch:
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Find xlsx file
+        id: find
+        run: echo "file=$(ls data/*.xlsx | head -1)" >> $GITHUB_OUTPUT
+
+      - name: Run ingest
+        run: python ingest.py "${{ steps.find.outputs.file }}"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
