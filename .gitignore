@@ -18,6 +18,3 @@ rejected_rows.csv
 
 # macOS
 .DS_Store
-
-# Data files (drop locally to run, don't commit)
-data/*.xlsx
