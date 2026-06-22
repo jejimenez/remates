@@ -1,31 +1,37 @@
-name: Ingest weekly remates
+name: Weekly Remates Ingestion
 
 on:
-  push:
-    paths:
-      - 'data/*.xlsx'
+  # Manual trigger for testing
   workflow_dispatch:
+
+  # Runs every Wednesday at 11pm UTC (6pm COT)
+  #schedule:
+  #  - cron: "0 23 * * 3"
 
 jobs:
   ingest:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Find xlsx file
-        id: find
-        run: echo "file=$(ls data/*.xlsx | head -1)" >> $GITHUB_OUTPUT
+      - name: Download latest file from Google Drive
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+        run: python download_from_drive.py /tmp/latest.xlsx
 
-      - name: Run ingest
-        run: python ingest.py "${{ steps.find.outputs.file }}"
+      - name: Run ingestion
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python ingest.py /tmp/latest.xlsx
